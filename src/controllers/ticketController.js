@@ -1,7 +1,7 @@
 import { v4 as uuidv4 } from "uuid";
 import TicketModel from "../models/ticketModel.js";
 
-const INSERT_TICKET = async (req, res) => {
+const NEW_TICKET = async (req, res) => {
   try {
     const ticket = new TicketModel({
       id: uuidv4(),
@@ -40,4 +40,4 @@ const GET_TICKET_BY_ID = async (req, res) => {
   }
 };
 
-export { INSERT_TICKET, GET_TICKETS, GET_TICKET_BY_ID };
+export { NEW_TICKET, GET_TICKETS, GET_TICKET_BY_ID };
