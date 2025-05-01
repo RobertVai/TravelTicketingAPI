@@ -70,8 +70,10 @@ const GET_USERS = async (req, res) => {
 
 const GET_USER_BY_ID = async (req, res) => {
   try {
-    const user = await UserModel.findOne({ id: req.params.id });
+    const user = await UserModel.findOne({ id: req.body.userId });
+
     if (!user) return res.status(404).json({ message: "User not found" });
+
     res.status(200).json(user);
   } catch (err) {
     console.log(err);
@@ -105,4 +107,38 @@ const SIGN_IN = async (req, res) => {
   }
 };
 
-export { NEW_USER, GET_USERS, GET_USER_BY_ID, SIGN_IN };
+const GET_AUTH_USERS = async (req, res) => {
+  try {
+    const users = await UserModel.find().sort({ name: 1 });
+    res.status(200).json(users);
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ message: "Failed to load users" });
+  }
+};
+
+
+
+const GET_NEW_JWT_TOKEN = async (req, res) => {
+  const { jwt_refresh_token } = req.body;
+
+  try {
+    
+    const checkToken = jwt.verify(jwt_refresh_token, JWT_REFRESH_SECRET);
+
+    const newToken = jwt.sign({ id: checkToken.id }, JWT_SECRET, { expiresIn: "2h" });
+
+    return res.status(200).json({
+      message: "New token generated",
+      jwt_token: newToken,
+      jwt_refresh_token
+    });
+
+  } catch (err) {
+    return res.status(400).json({
+      message: "Something went wrong or token expired, try signing in again"
+    });
+  }
+};
+
+export { NEW_USER, GET_USERS, GET_USER_BY_ID, SIGN_IN, GET_NEW_JWT_TOKEN, GET_AUTH_USERS };
