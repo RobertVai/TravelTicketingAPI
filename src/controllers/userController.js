@@ -79,4 +79,30 @@ const GET_USER_BY_ID = async (req, res) => {
   }
 };
 
-export { NEW_USER, GET_USERS, GET_USER_BY_ID };
+const SIGN_IN = async (req, res) => {
+  const { email, password } = req.body;
+
+  try {
+    const user = await UserModel.findOne({ email });
+
+    if (!user) {
+      return res.status(404).json({ message: "Wrong email or password" });
+    }
+
+    const isMatch = bcrypt.compareSync(password, user.password);
+    if (!isMatch) {
+      return res.status(404).json({ message: "Wrong email or password" });
+    }
+
+    const jwt_token = jwt.sign({ id: user.id }, JWT_SECRET, { expiresIn: "2h" });
+    const jwt_refresh_token = jwt.sign({ id: user.id }, JWT_REFRESH_SECRET, { expiresIn: "1d" });
+
+    return res.status(200).json({
+      message: "Logged in successfully", jwt_token, jwt_refresh_token });
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ message: "Server error during login" });
+  }
+};
+
+export { NEW_USER, GET_USERS, GET_USER_BY_ID, SIGN_IN };
