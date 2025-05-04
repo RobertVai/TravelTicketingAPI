@@ -1,34 +1,26 @@
+console.log("JWT_SECRET IS:", process.env.JWT_SECRET);
 import { v4 as uuidv4 } from "uuid";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import UserModel from "../models/userModel.js";
 import TicketModel from "../models/ticketModel.js";
 
-const JWT_SECRET = "your_jwt_secret";
-const JWT_REFRESH_SECRET = "your_jwt_refresh_secret";
-
-
 const NEW_USER = async (req, res) => {
   const data = req.body;
 
-  
   if (!data.email.includes("@")) {
     return res.status(400).json({ message: "Invalid email format" });
   }
 
-  
   const formattedName = data.name.charAt(0).toUpperCase() + data.name.slice(1);
 
-  
   if (data.password.length < 6 || !/\d/.test(data.password)) {
     return res.status(400).json({ message: "Password must contain at least 6 characters and one digit" });
   }
 
-  
   const salt = bcrypt.genSaltSync(10);
   const passwordHash = bcrypt.hashSync(data.password, salt);
 
-  
   const user = {
     id: uuidv4(),
     name: formattedName,
@@ -42,9 +34,8 @@ const NEW_USER = async (req, res) => {
     const response = await new UserModel(user);
     const createdUser = await response.save();
 
-    
-    const jwt_token = jwt.sign({ id: user.id }, JWT_SECRET, { expiresIn: "2h" });
-    const jwt_refresh_token = jwt.sign({ id: user.id }, JWT_REFRESH_SECRET, { expiresIn: "1d" });
+    const jwt_token = jwt.sign({ id: user.id }, process.env.JWT_SECRET, { expiresIn: "2h" });
+    const jwt_refresh_token = jwt.sign({ id: user.id }, process.env.JWT_REFRESH_SECRET, { expiresIn: "1d" });
 
     res.status(200).json({
       message: "Registration successful",
@@ -57,7 +48,6 @@ const NEW_USER = async (req, res) => {
     res.status(500).json({ message: "Failed to create user" });
   }
 };
-
 
 const GET_USERS = async (req, res) => {
   try {
@@ -97,8 +87,8 @@ const SIGN_IN = async (req, res) => {
       return res.status(404).json({ message: "Wrong email or password" });
     }
 
-    const jwt_token = jwt.sign({ id: user.id }, JWT_SECRET, { expiresIn: "2h" });
-    const jwt_refresh_token = jwt.sign({ id: user.id }, JWT_REFRESH_SECRET, { expiresIn: "1d" });
+    const jwt_token = jwt.sign({ id: user.id }, process.env.JWT_SECRET, { expiresIn: "2h" });
+    const jwt_refresh_token = jwt.sign({ id: user.id }, process.env.JWT_REFRESH_SECRET, { expiresIn: "1d" });
 
     return res.status(200).json({
       message: "Logged in successfully", jwt_token, jwt_refresh_token });
@@ -150,16 +140,12 @@ const PURCHASE_TICKET = async (req, res) => {
   }
 };
 
-
-
 const GET_NEW_JWT_TOKEN = async (req, res) => {
   const { jwt_refresh_token } = req.body;
 
   try {
-    
-    const checkToken = jwt.verify(jwt_refresh_token, JWT_REFRESH_SECRET);
-
-    const newToken = jwt.sign({ id: checkToken.id }, JWT_SECRET, { expiresIn: "2h" });
+    const checkToken = jwt.verify(jwt_refresh_token, process.env.JWT_REFRESH_SECRET);
+    const newToken = jwt.sign({ id: checkToken.id }, process.env.JWT_SECRET, { expiresIn: "2h" });
 
     return res.status(200).json({
       message: "New token generated",
@@ -174,4 +160,63 @@ const GET_NEW_JWT_TOKEN = async (req, res) => {
   }
 };
 
-export { NEW_USER, GET_USERS, GET_USER_BY_ID, SIGN_IN, GET_NEW_JWT_TOKEN, GET_AUTH_USERS, PURCHASE_TICKET };
+const GET_ALL_USERS_WITH_TICKETS = async (req, res) => {
+  try {
+    const users = await UserModel.aggregate([
+      {
+        $lookup: {
+          from: "tickets",
+          localField: "bought_tickets",
+          foreignField: "_id",
+          as: "ticket_info"
+        }
+      }
+    ]);
+
+    res.status(200).json(users);
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ message: "Failed to load users with ticket info" });
+  }
+};
+
+const GET_USER_BY_ID_WITH_TICKETS = async (req, res) => {
+  const userId = req.body.userId;
+
+  try {
+    const userWithTickets = await UserModel.aggregate([
+      {
+        $match: { id: userId }
+      },
+      {
+        $lookup: {
+          from: "tickets",
+          localField: "bought_tickets",
+          foreignField: "_id",
+          as: "ticket_info"
+        }
+      }
+    ]);
+
+    if (!userWithTickets || userWithTickets.length === 0) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    res.status(200).json(userWithTickets[0]);
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ message: "Failed to load user with ticket info" });
+  }
+};
+
+export {
+  NEW_USER,
+  GET_USERS,
+  GET_USER_BY_ID,
+  SIGN_IN,
+  GET_NEW_JWT_TOKEN,
+  GET_AUTH_USERS,
+  PURCHASE_TICKET,
+  GET_ALL_USERS_WITH_TICKETS,
+  GET_USER_BY_ID_WITH_TICKETS
+};

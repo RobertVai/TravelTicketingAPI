@@ -1,11 +1,12 @@
+import dotenv from 'dotenv';
+dotenv.config();
+console.log("ENV CONTENT:", process.env);
 import express from 'express';
 import mongoose from 'mongoose';
-import dotenv from 'dotenv';
-
 import userRoutes from './src/routes/userRoutes.js';
 import ticketRoutes from './src/routes/ticketRoutes.js';
 
-dotenv.config();
+
 
 const app = express();
 app.use(express.json());
