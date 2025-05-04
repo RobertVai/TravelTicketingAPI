@@ -5,7 +5,8 @@ import {
   GET_USER_BY_ID,
   SIGN_IN,
   GET_NEW_JWT_TOKEN,
-  GET_AUTH_USERS
+  GET_AUTH_USERS,
+  PURCHASE_TICKET
   
 } from "../controllers/userController.js";
 import authUser from "../middleware/authUser.js";
@@ -19,6 +20,7 @@ router.get("/getUserById", authUser, GET_USER_BY_ID);
 router.post("/signIn", SIGN_IN);
 router.post("/getNewJwtToken", GET_NEW_JWT_TOKEN);
 router.get("/getAuthUsers", authUser, GET_AUTH_USERS );
+router.post("/purchaseTicket/:ticketId", authUser, PURCHASE_TICKET);
 
 
 export default router;

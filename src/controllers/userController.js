@@ -2,6 +2,7 @@ import { v4 as uuidv4 } from "uuid";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import UserModel from "../models/userModel.js";
+import TicketModel from "../models/ticketModel.js";
 
 const JWT_SECRET = "your_jwt_secret";
 const JWT_REFRESH_SECRET = "your_jwt_refresh_secret";
@@ -117,6 +118,38 @@ const GET_AUTH_USERS = async (req, res) => {
   }
 };
 
+const PURCHASE_TICKET = async (req, res) => {
+  const userId = req.body.userId;
+  const ticketId = req.params.ticketId;
+
+  try {
+    const user = await UserModel.findOne({ id: userId });
+    const ticket = await TicketModel.findOne({ id: ticketId });
+
+    if (!user || !ticket) {
+      return res.status(404).json({ message: "User or ticket not found" });
+    }
+
+    if (user.money_balance < ticket.ticket_price) {
+      return res.status(400).json({ message: "Insufficient funds to purchase ticket" });
+    }
+
+    user.money_balance -= ticket.ticket_price;
+    user.bought_tickets.push(ticket._id);
+
+    const updatedUser = await user.save();
+
+    return res.status(200).json({
+      message: "Ticket successfully purchased",
+      updated_balance: updatedUser.money_balance,
+      bought_tickets: updatedUser.bought_tickets
+    });
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ message: "Error processing ticket purchase" });
+  }
+};
+
 
 
 const GET_NEW_JWT_TOKEN = async (req, res) => {
@@ -141,4 +174,4 @@ const GET_NEW_JWT_TOKEN = async (req, res) => {
   }
 };
 
-export { NEW_USER, GET_USERS, GET_USER_BY_ID, SIGN_IN, GET_NEW_JWT_TOKEN, GET_AUTH_USERS };
+export { NEW_USER, GET_USERS, GET_USER_BY_ID, SIGN_IN, GET_NEW_JWT_TOKEN, GET_AUTH_USERS, PURCHASE_TICKET };
