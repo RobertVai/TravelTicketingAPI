@@ -1,6 +1,5 @@
 import dotenv from 'dotenv';
 dotenv.config();
-console.log("ENV CONTENT:", process.env);
 import express from 'express';
 import mongoose from 'mongoose';
 import userRoutes from './src/routes/userRoutes.js';

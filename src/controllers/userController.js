@@ -1,7 +1,7 @@
-console.log("JWT_SECRET IS:", process.env.JWT_SECRET);
 import { v4 as uuidv4 } from "uuid";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
+import mongoose from "mongoose";
 import UserModel from "../models/userModel.js";
 import TicketModel from "../models/ticketModel.js";
 
@@ -110,11 +110,11 @@ const GET_AUTH_USERS = async (req, res) => {
 
 const PURCHASE_TICKET = async (req, res) => {
   const userId = req.body.userId;
-  const ticketId = req.params.ticketId;
+  const ticketId = new mongoose.Types.ObjectId(req.params.ticketId);
 
   try {
     const user = await UserModel.findOne({ id: userId });
-    const ticket = await TicketModel.findOne({ id: ticketId });
+    const ticket = await TicketModel.findOne({ _id: ticketId });
 
     if (!user || !ticket) {
       return res.status(404).json({ message: "User or ticket not found" });

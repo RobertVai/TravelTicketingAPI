@@ -5,7 +5,7 @@ const schema = mongoose.Schema({
   name: { type: String, required: true, min: 2 },
   email: { type: String, required: true },
   password: { type: String, required: true },
-  bought_tickets: { type: [String], required: true },
+  bought_tickets: [{ type: mongoose.Schema.Types.ObjectId, ref: "tickets" }],
   money_balance: { type: Number, required: true }
 });
 
