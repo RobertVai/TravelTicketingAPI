@@ -15,7 +15,11 @@ const NEW_USER = async (req, res) => {
   const formattedName = data.name.charAt(0).toUpperCase() + data.name.slice(1);
 
   if (data.password.length < 6 || !/\d/.test(data.password)) {
-    return res.status(400).json({ message: "Password must contain at least 6 characters and one digit" });
+    return res
+      .status(400)
+      .json({
+        message: "Password must contain at least 6 characters and one digit",
+      });
   }
 
   const salt = bcrypt.genSaltSync(10);
@@ -27,21 +31,27 @@ const NEW_USER = async (req, res) => {
     email: data.email,
     password: passwordHash,
     bought_tickets: [],
-    money_balance: data.money_balance || 0
+    money_balance: data.money_balance || 0,
   };
 
   try {
     const response = await new UserModel(user);
     const createdUser = await response.save();
 
-    const jwt_token = jwt.sign({ id: user.id }, process.env.JWT_SECRET, { expiresIn: "2h" });
-    const jwt_refresh_token = jwt.sign({ id: user.id }, process.env.JWT_REFRESH_SECRET, { expiresIn: "1d" });
+    const jwt_token = jwt.sign({ id: user.id }, process.env.JWT_SECRET, {
+      expiresIn: "2h",
+    });
+    const jwt_refresh_token = jwt.sign(
+      { id: user.id },
+      process.env.JWT_REFRESH_SECRET,
+      { expiresIn: "1d" }
+    );
 
     res.status(200).json({
       message: "Registration successful",
       user: createdUser,
       jwt_token,
-      jwt_refresh_token
+      jwt_refresh_token,
     });
   } catch (err) {
     console.log(err);
@@ -87,11 +97,20 @@ const SIGN_IN = async (req, res) => {
       return res.status(404).json({ message: "Wrong email or password" });
     }
 
-    const jwt_token = jwt.sign({ id: user.id }, process.env.JWT_SECRET, { expiresIn: "2h" });
-    const jwt_refresh_token = jwt.sign({ id: user.id }, process.env.JWT_REFRESH_SECRET, { expiresIn: "1d" });
+    const jwt_token = jwt.sign({ id: user.id }, process.env.JWT_SECRET, {
+      expiresIn: "2h",
+    });
+    const jwt_refresh_token = jwt.sign(
+      { id: user.id },
+      process.env.JWT_REFRESH_SECRET,
+      { expiresIn: "1d" }
+    );
 
     return res.status(200).json({
-      message: "Logged in successfully", jwt_token, jwt_refresh_token });
+      message: "Logged in successfully",
+      jwt_token,
+      jwt_refresh_token,
+    });
   } catch (err) {
     console.log(err);
     res.status(500).json({ message: "Server error during login" });
@@ -121,7 +140,9 @@ const PURCHASE_TICKET = async (req, res) => {
     }
 
     if (user.money_balance < ticket.ticket_price) {
-      return res.status(400).json({ message: "Insufficient funds to purchase ticket" });
+      return res
+        .status(400)
+        .json({ message: "Insufficient funds to purchase ticket" });
     }
 
     user.money_balance -= ticket.ticket_price;
@@ -132,7 +153,7 @@ const PURCHASE_TICKET = async (req, res) => {
     return res.status(200).json({
       message: "Ticket successfully purchased",
       updated_balance: updatedUser.money_balance,
-      bought_tickets: updatedUser.bought_tickets
+      bought_tickets: updatedUser.bought_tickets,
     });
   } catch (err) {
     console.log(err);
@@ -144,18 +165,22 @@ const GET_NEW_JWT_TOKEN = async (req, res) => {
   const { jwt_refresh_token } = req.body;
 
   try {
-    const checkToken = jwt.verify(jwt_refresh_token, process.env.JWT_REFRESH_SECRET);
-    const newToken = jwt.sign({ id: checkToken.id }, process.env.JWT_SECRET, { expiresIn: "2h" });
+    const checkToken = jwt.verify(
+      jwt_refresh_token,
+      process.env.JWT_REFRESH_SECRET
+    );
+    const newToken = jwt.sign({ id: checkToken.id }, process.env.JWT_SECRET, {
+      expiresIn: "2h",
+    });
 
     return res.status(200).json({
       message: "New token generated",
       jwt_token: newToken,
-      jwt_refresh_token
+      jwt_refresh_token,
     });
-
   } catch (err) {
     return res.status(400).json({
-      message: "Something went wrong or token expired, try signing in again"
+      message: "Something went wrong or token expired, try signing in again",
     });
   }
 };
@@ -168,9 +193,9 @@ const GET_ALL_USERS_WITH_TICKETS = async (req, res) => {
           from: "tickets",
           localField: "bought_tickets",
           foreignField: "_id",
-          as: "ticket_info"
-        }
-      }
+          as: "ticket_info",
+        },
+      },
     ]);
 
     res.status(200).json(users);
@@ -186,16 +211,16 @@ const GET_USER_BY_ID_WITH_TICKETS = async (req, res) => {
   try {
     const userWithTickets = await UserModel.aggregate([
       {
-        $match: { id: userId }
+        $match: { id: userId },
       },
       {
         $lookup: {
           from: "tickets",
           localField: "bought_tickets",
           foreignField: "_id",
-          as: "ticket_info"
-        }
-      }
+          as: "ticket_info",
+        },
+      },
     ]);
 
     if (!userWithTickets || userWithTickets.length === 0) {
@@ -218,5 +243,5 @@ export {
   GET_AUTH_USERS,
   PURCHASE_TICKET,
   GET_ALL_USERS_WITH_TICKETS,
-  GET_USER_BY_ID_WITH_TICKETS
+  GET_USER_BY_ID_WITH_TICKETS,
 };

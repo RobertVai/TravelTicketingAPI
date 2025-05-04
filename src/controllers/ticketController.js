@@ -40,4 +40,44 @@ const GET_TICKET_BY_ID = async (req, res) => {
   }
 };
 
-export { NEW_TICKET, GET_TICKETS, GET_TICKET_BY_ID };
+const CREATE_TICKET = async (req, res) => {
+  const {
+    id,
+    title,
+    ticket_price,
+    from_location,
+    to_location,
+    to_location_photo_url
+  } = req.body;
+
+  if (!id || !title || !ticket_price || !from_location || !to_location) {
+    return res.status(400).json({ message: "Missing required ticket fields" });
+  }
+
+  try {
+    const newTicket = new TicketModel({
+      id,
+      title,
+      ticket_price,
+      from_location,
+      to_location,
+      to_location_photo_url
+    });
+
+    const savedTicket = await newTicket.save();
+
+    res.status(201).json({
+      message: "Ticket successfully inserted",
+      ticket: savedTicket
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Failed to insert ticket" });
+  }
+};
+
+export { 
+  NEW_TICKET,
+  GET_TICKETS, 
+  GET_TICKET_BY_ID, 
+  CREATE_TICKET };
