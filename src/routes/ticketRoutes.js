@@ -7,11 +7,13 @@ import {
 } from "../controllers/ticketController.js";
 import authUser from "../middleware/authUser.js";
 
+
 const router = express.Router();
 
 router.post("/", NEW_TICKET);
+router.post("/createTicket", authUser, CREATE_TICKET);
 router.get("/", GET_TICKETS);
 router.get("/:id", GET_TICKET_BY_ID);
-router.post("/createTicket", authUser, CREATE_TICKET);
+
 
 export default router;
